@@ -1,264 +1,554 @@
-/* ─── QLik Extension Printer — stylesheet ──────────────────────────────────
-   Styles for the in-sheet print button and the sheet-picker modal.
-   All classes are prefixed qep- to avoid collisions with Qlik's own styles.
+/* ─── QLik Extension Printer — Control Panel stylesheet ─────────────────────
+   All options are rendered directly in the widget (no property panel needed).
+   Class prefix: qep-   — avoids collisions with Qlik's own stylesheet.
    ────────────────────────────────────────────────────────────────────────── */
 
+/* ── CSS custom properties ───────────────────────────────────────────────── */
 
-/* ── Wrapper ─────────────────────────────────────────────────────────────── */
+.qep-panel {
+  --qep-blue:        #4477aa;
+  --qep-blue-dk:     #2d5f8a;
+  --qep-blue-lt:     #e8f0f8;
+  --qep-blue-ltr:    #f0f6fc;
+  --qep-text:        #1e293b;
+  --qep-text-muted:  #64748b;
+  --qep-border:      #e2e8f0;
+  --qep-surface:     #ffffff;
+  --qep-bg:          #f8fafc;
+  --qep-radius:      8px;
+  --qep-radius-sm:   5px;
+  --qep-shadow:      0 2px 8px rgba(0,0,0,.10);
+}
 
-.qep-wrapper {
+
+/* ── Main panel container ────────────────────────────────────────────────── */
+
+.qep-panel {
+  display:        flex;
+  flex-direction: column;
+  width:          100%;
+  height:         100%;
+  background:     var(--qep-bg);
+  border-radius:  var(--qep-radius);
+  overflow-y:     auto;
+  overflow-x:     hidden;
+  font-family:    "Source Sans Pro", "Segoe UI", Arial, sans-serif;
+  font-size:      13px;
+  color:          var(--qep-text);
+  box-sizing:     border-box;
+  -webkit-user-select: none;
+  user-select:    none;
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+
+.qep-section {
+  padding:       12px 14px 10px;
+  border-bottom: 1px solid var(--qep-border);
+  flex-shrink:   0;
+}
+
+.qep-section:last-of-type {
+  border-bottom: none;
+}
+
+.qep-section-head {
+  font-size:      10px;
+  font-weight:    700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color:          var(--qep-text-muted);
+  margin-bottom:  8px;
+}
+
+
+/* ── Mode cards (Feuille courante / Plusieurs feuilles) ──────────────────── */
+
+.qep-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap:     8px;
+}
+
+.qep-mode-card {
+  display:        flex;
+  flex-direction: column;
+  align-items:    flex-start;
+  gap:            3px;
+  padding:        10px 10px 9px;
+  background:     var(--qep-surface);
+  border:         2px solid var(--qep-border);
+  border-radius:  var(--qep-radius);
+  cursor:         pointer;
+  text-align:     left;
+  transition:     border-color .15s, background .15s, box-shadow .15s;
+  min-width:      0;
+}
+
+.qep-mode-card:hover {
+  border-color: var(--qep-blue);
+  background:   var(--qep-blue-ltr);
+}
+
+.qep-mode-card.qep-active {
+  border-color: var(--qep-blue);
+  background:   var(--qep-blue-lt);
+  box-shadow:   0 0 0 1px var(--qep-blue);
+}
+
+.qep-mode-card .qep-ico {
+  width:  18px;
+  height: 18px;
+  fill:   var(--qep-text-muted);
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.qep-mode-card.qep-active .qep-ico {
+  fill: var(--qep-blue);
+}
+
+.qep-mode-card strong {
+  font-size:   12px;
+  font-weight: 700;
+  color:       var(--qep-text);
+  white-space: nowrap;
+  overflow:    hidden;
+  text-overflow: ellipsis;
+  max-width:   100%;
+}
+
+.qep-mode-card small {
+  font-size: 11px;
+  color:     var(--qep-text-muted);
+  white-space: nowrap;
+  overflow:  hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.qep-count-ok    { color: var(--qep-blue)   !important; font-weight: 600; }
+.qep-count-empty { color: var(--qep-text-muted) !important; }
+
+
+/* ── Selected-sheet tags (below mode grid) ───────────────────────────────── */
+
+.qep-tags {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       4px;
+  margin-top: 8px;
+}
+
+.qep-tag {
+  display:       inline-flex;
+  align-items:   center;
+  padding:       2px 8px;
+  background:    var(--qep-blue-lt);
+  color:         var(--qep-blue-dk);
+  border-radius: 20px;
+  font-size:     11px;
+  font-weight:   600;
+  white-space:   nowrap;
+  max-width:     120px;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+.qep-tag-more {
+  background: var(--qep-border);
+  color:      var(--qep-text-muted);
+}
+
+
+/* ── Format grid (Taille / Orientation / Échelle) ───────────────────────── */
+
+.qep-format-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:     8px;
+}
+
+.qep-field {
+  display:        flex;
+  flex-direction: column;
+  gap:            4px;
+  min-width:      0;
+}
+
+.qep-field-lbl {
+  font-size:   10px;
+  font-weight: 600;
+  color:       var(--qep-text-muted);
+  white-space: nowrap;
+}
+
+.qep-select {
+  appearance:       none;
+  -webkit-appearance: none;
+  background:       var(--qep-surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E")
+    no-repeat right 8px center;
+  background-size:  10px 6px;
+  border:           1px solid var(--qep-border);
+  border-radius:    var(--qep-radius-sm);
+  padding:          5px 22px 5px 7px;
+  font-family:      inherit;
+  font-size:        12px;
+  color:            var(--qep-text);
+  cursor:           pointer;
+  width:            100%;
+  box-sizing:       border-box;
+  transition:       border-color .12s;
+  white-space:      nowrap;
+  overflow:         hidden;
+  text-overflow:    ellipsis;
+}
+
+.qep-select:hover  { border-color: var(--qep-blue); }
+.qep-select:focus  { outline: 2px solid var(--qep-blue); outline-offset: 1px; }
+
+
+/* ── Options rows (Rendu / Zone) ─────────────────────────────────────────── */
+
+.qep-opt-row {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  margin-top:  6px;
+}
+
+.qep-opt-row:first-of-type { margin-top: 0; }
+
+.qep-opt-lbl {
+  font-size:   11px;
+  font-weight: 600;
+  color:       var(--qep-text-muted);
+  min-width:   38px;
+  flex-shrink: 0;
+}
+
+/* ── Segmented control ───────────────────────────────────────────────────── */
+
+.qep-seg {
+  display:       flex;
+  background:    var(--qep-border);
+  border-radius: var(--qep-radius-sm);
+  padding:       2px;
+  gap:           2px;
+  flex:          1;
+  min-width:     0;
+}
+
+.qep-seg-btn {
+  flex:           1;
+  display:        inline-flex;
+  align-items:    center;
+  justify-content: center;
+  gap:            4px;
+  padding:        5px 6px;
+  border:         none;
+  border-radius:  4px;
+  background:     transparent;
+  font-family:    inherit;
+  font-size:      11px;
+  font-weight:    600;
+  color:          var(--qep-text-muted);
+  cursor:         pointer;
+  white-space:    nowrap;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
+  transition:     background .12s, color .12s, box-shadow .12s;
+}
+
+.qep-seg-btn .qep-ico {
+  width:  13px;
+  height: 13px;
+  fill:   currentColor;
+  flex-shrink: 0;
+}
+
+.qep-seg-btn:hover:not(.qep-seg-on) {
+  background: rgba(255,255,255,.55);
+  color:      var(--qep-text);
+}
+
+.qep-seg-btn.qep-seg-on {
+  background:  var(--qep-surface);
+  color:       var(--qep-blue-dk);
+  box-shadow:  var(--qep-shadow);
+}
+
+
+/* ── Print CTA zone ──────────────────────────────────────────────────────── */
+
+.qep-cta {
+  padding:     12px 14px 14px;
+  margin-top:  auto;
+  flex-shrink: 0;
+}
+
+.qep-cta-btn {
   display:         flex;
-  flex-direction:  column;
   align-items:     center;
   justify-content: center;
   gap:             8px;
   width:           100%;
-  height:          100%;
-  padding:         8px;
-  box-sizing:      border-box;
-}
-
-/* When both buttons are present, fill width evenly */
-.qep-has-selector .qep-btn {
-  width: 100%;
-  max-width: 320px;
-}
-
-
-/* ── Base button ──────────────────────────────────────────────────────────── */
-
-.qep-btn {
-  display:         inline-flex;
-  align-items:     center;
-  justify-content: center;
-  gap:             8px;
-  padding:         10px 20px;
+  padding:         11px 18px;
   border:          none;
-  border-radius:   6px;
+  border-radius:   var(--qep-radius);
+  background:      var(--qep-blue);
+  color:           #fff;
   font-family:     inherit;
   font-size:       14px;
-  font-weight:     600;
-  line-height:     1.3;
+  font-weight:     700;
+  letter-spacing:  .01em;
   cursor:          pointer;
-  white-space:     nowrap;
-  max-width:       100%;
-  overflow:        hidden;
-  text-overflow:   ellipsis;
-  transition:      background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+  box-shadow:      0 3px 10px rgba(68,119,170,.35);
+  transition:      background .15s, box-shadow .15s, transform .08s, opacity .15s;
   -webkit-user-select: none;
   user-select:     none;
 }
 
-.qep-btn:active {
-  transform:  scale(0.97);
-}
-
-.qep-btn:focus-visible {
-  outline:        2px solid #6aaddb;
-  outline-offset: 3px;
-}
-
-
-/* ── Primary button (print current view) ─────────────────────────────────── */
-
-.qep-btn-primary {
-  background:  #4477aa;
-  color:       #ffffff;
-  box-shadow:  0 2px 6px rgba(0, 0, 0, 0.20);
-}
-
-.qep-btn-primary:hover {
-  background:  #2d5f8a;
-  box-shadow:  0 4px 10px rgba(0, 0, 0, 0.25);
-}
-
-.qep-btn-primary:active {
-  box-shadow:  0 1px 3px rgba(0, 0, 0, 0.18);
-}
-
-
-/* ── Secondary button (open sheet picker) ────────────────────────────────── */
-
-.qep-btn-secondary {
-  background:  transparent;
-  color:       #4477aa;
-  border:      2px solid #4477aa;
-  box-shadow:  none;
-}
-
-.qep-btn-secondary:hover {
-  background:  rgba(68, 119, 170, 0.08);
-  border-color: #2d5f8a;
-  color:        #2d5f8a;
-}
-
-.qep-btn-secondary:active {
-  background:  rgba(68, 119, 170, 0.15);
-}
-
-
-/* ── Printer icon (inline SVG) ───────────────────────────────────────────── */
-
-.qep-icon {
-  width:       18px;
-  height:      18px;
-  fill:        currentColor;
+.qep-cta-btn .qep-ico {
+  width:  20px;
+  height: 20px;
+  fill:   currentColor;
   flex-shrink: 0;
 }
 
+.qep-cta-btn:hover:not([disabled]) {
+  background:  var(--qep-blue-dk);
+  box-shadow:  0 5px 14px rgba(68,119,170,.40);
+}
 
-/* ── Label ───────────────────────────────────────────────────────────────── */
+.qep-cta-btn:active:not([disabled]) {
+  transform:   scale(0.98);
+  box-shadow:  0 2px 6px rgba(68,119,170,.25);
+}
 
-.qep-label {
+.qep-cta-btn[disabled] {
+  background:  #94a3b8;
+  box-shadow:  none;
+  cursor:      not-allowed;
+  opacity:     .75;
+}
+
+.qep-cta-label {
   overflow:      hidden;
   text-overflow: ellipsis;
   white-space:   nowrap;
 }
 
 
-/* ─── Sheet-picker modal overlay ─────────────────────────────────────────────
-   Appended to <body> so it is always on top of Qlik's z-index stack.
+/* ─── Sheet picker dialog ────────────────────────────────────────────────────
+   Fixed overlay appended to <body> — always on top of Qlik's z-index stack.
    ────────────────────────────────────────────────────────────────────────── */
 
 .qep-overlay {
   position:        fixed;
-  inset:           0;                   /* top/right/bottom/left = 0 */
+  inset:           0;
   z-index:         99999;
-  background:      rgba(0, 0, 0, 0.55);
+  background:      rgba(15, 23, 42, .50);
   display:         flex;
   align-items:     center;
   justify-content: center;
-  padding:         16px;
+  padding:         20px;
   box-sizing:      border-box;
+  backdrop-filter: blur(2px);
 }
 
-
-/* ── Modal panel ──────────────────────────────────────────────────────────── */
-
-.qep-modal {
-  background:    #ffffff;
-  border-radius: 10px;
-  box-shadow:    0 8px 32px rgba(0, 0, 0, 0.30);
-  width:         100%;
-  max-width:     480px;
-  max-height:    80vh;
-  display:       flex;
+.qep-dlg {
+  background:     #fff;
+  border-radius:  12px;
+  box-shadow:     0 20px 60px rgba(0,0,0,.22), 0 4px 12px rgba(0,0,0,.12);
+  width:          100%;
+  max-width:      500px;
+  max-height:     82vh;
+  display:        flex;
   flex-direction: column;
-  overflow:      hidden;
-  font-family:   inherit;
-  animation:     qep-modal-in 0.18s ease;
+  overflow:       hidden;
+  font-family:    "Source Sans Pro", "Segoe UI", Arial, sans-serif;
+  animation:      qep-dlg-in .18s cubic-bezier(.34,1.3,.64,1);
 }
 
-@keyframes qep-modal-in {
-  from { opacity: 0; transform: scale(0.95) translateY(-8px); }
-  to   { opacity: 1; transform: scale(1)    translateY(0);     }
+@keyframes qep-dlg-in {
+  from { opacity: 0; transform: scale(.93) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
 }
 
+/* ── Dialog header ───────────────────────────────────────────────────────── */
 
-/* ── Modal header ─────────────────────────────────────────────────────────── */
-
-.qep-modal-header {
+.qep-dlg-head {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  padding:         16px 20px;
-  border-bottom:   1px solid #e5e7eb;
+  padding:         18px 20px 16px;
+  border-bottom:   1px solid #e2e8f0;
   flex-shrink:     0;
 }
 
-.qep-modal-title {
+.qep-dlg-title {
   margin:      0;
-  font-size:   16px;
+  font-size:   17px;
   font-weight: 700;
   color:       #1e293b;
   line-height: 1.3;
 }
 
-.qep-close-btn {
-  background:    none;
+.qep-dlg-close {
+  width:         32px;
+  height:        32px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
   border:        none;
-  cursor:        pointer;
+  border-radius: 6px;
+  background:    transparent;
   font-size:     18px;
-  color:         #64748b;
-  line-height:   1;
-  padding:       4px 6px;
-  border-radius: 4px;
-  transition:    color 0.12s, background 0.12s;
+  color:         #94a3b8;
+  cursor:        pointer;
   flex-shrink:   0;
+  transition:    background .12s, color .12s;
 }
 
-.qep-close-btn:hover {
-  color:       #1e293b;
-  background:  #f1f5f9;
+.qep-dlg-close:hover { background: #f1f5f9; color: #1e293b; }
+
+/* ── Search bar ──────────────────────────────────────────────────────────── */
+
+.qep-dlg-search {
+  padding:     10px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
+.qep-search-input {
+  width:         100%;
+  padding:       8px 12px;
+  border:        1px solid #e2e8f0;
+  border-radius: 6px;
+  font-family:   inherit;
+  font-size:     13px;
+  color:         #1e293b;
+  background:    #f8fafc;
+  box-sizing:    border-box;
+  transition:    border-color .12s;
+  outline:       none;
+}
 
-/* ── Modal body ───────────────────────────────────────────────────────────── */
+.qep-search-input:focus { border-color: #4477aa; background: #fff; }
+.qep-search-input::placeholder { color: #94a3b8; }
 
-.qep-modal-body {
+/* ── Dialog body (sheet list) ────────────────────────────────────────────── */
+
+.qep-dlg-body {
   flex:       1;
   overflow-y: auto;
-  padding:    8px 0;
+  padding:    4px 0;
 }
 
-.qep-loading {
+.qep-dlg-loading {
   display:         flex;
   align-items:     center;
   justify-content: center;
-  min-height:      120px;
+  gap:             12px;
+  min-height:      140px;
   color:           #64748b;
   font-size:       14px;
-  padding:         20px;
 }
 
-.qep-picker-error {
-  padding:     24px 20px;
+/* Spinner animation */
+.qep-spinner {
+  width:        22px;
+  height:       22px;
+  border:       3px solid #e2e8f0;
+  border-top-color: #4477aa;
+  border-radius: 50%;
+  animation:    qep-spin .75s linear infinite;
+  flex-shrink:  0;
+}
+
+@keyframes qep-spin {
+  to { transform: rotate(360deg); }
+}
+
+.qep-dlg-err {
+  padding:     30px 24px;
   color:       #b91c1c;
-  font-size:   14px;
-  line-height: 1.5;
+  font-size:   13px;
+  line-height: 1.6;
   text-align:  center;
 }
 
+.qep-dlg-err small { color: #64748b; font-size: 11px; }
 
-/* ── Sheet list ───────────────────────────────────────────────────────────── */
+/* Sheet list */
 
-.qep-sheet-list {
-  list-style:  none;
-  margin:      0;
-  padding:     0;
+.qep-dlg-list {
+  list-style: none;
+  margin:     0;
+  padding:    0;
 }
 
-.qep-sheet-item {
+.qep-dlg-item {
   border-bottom: 1px solid #f1f5f9;
 }
+.qep-dlg-item:last-child { border-bottom: none; }
 
-.qep-sheet-item:last-child {
-  border-bottom: none;
-}
-
-.qep-sheet-label {
+.qep-dlg-label {
   display:     flex;
   align-items: center;
   gap:         12px;
   padding:     11px 20px;
   cursor:      pointer;
-  transition:  background 0.10s;
+  transition:  background .10s;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-.qep-sheet-label:hover {
-  background: #f8fafc;
+.qep-dlg-label:hover { background: #f8fafc; }
+
+/* Hidden native checkbox */
+.qep-dlg-chk {
+  position: absolute;
+  opacity:  0;
+  width:    0;
+  height:   0;
 }
 
-.qep-sheet-check {
-  width:        16px;
-  height:       16px;
-  flex-shrink:  0;
-  accent-color: #4477aa;
-  cursor:       pointer;
+/* Custom checkbox box */
+.qep-chk-box {
+  width:         18px;
+  height:        18px;
+  border:        2px solid #cbd5e1;
+  border-radius: 4px;
+  flex-shrink:   0;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  background:    #fff;
+  transition:    border-color .12s, background .12s;
 }
 
-.qep-sheet-title {
-  font-size:   14px;
+.qep-dlg-chk:checked + .qep-chk-box {
+  background:    #4477aa;
+  border-color:  #4477aa;
+}
+
+/* Checkmark */
+.qep-dlg-chk:checked + .qep-chk-box::after {
+  content:      '';
+  display:      block;
+  width:        5px;
+  height:       9px;
+  border:       2px solid #fff;
+  border-top:   none;
+  border-left:  none;
+  transform:    rotate(42deg) translateY(-1px);
+}
+
+.qep-dlg-sheet-title {
+  font-size:   13px;
   color:       #1e293b;
   line-height: 1.4;
   flex:        1;
@@ -268,86 +558,68 @@
   white-space: nowrap;
 }
 
+/* ── Dialog footer ───────────────────────────────────────────────────────── */
 
-/* ── Modal footer ─────────────────────────────────────────────────────────── */
-
-.qep-modal-footer {
+.qep-dlg-foot {
   display:       flex;
   align-items:   center;
+  justify-content: space-between;
   gap:           8px;
-  padding:       12px 20px;
-  border-top:    1px solid #e5e7eb;
+  padding:       12px 16px;
+  border-top:    1px solid #e2e8f0;
   flex-shrink:   0;
   flex-wrap:     wrap;
 }
 
-.qep-footer-spacer {
-  flex: 1;
+.qep-dlg-foot-left,
+.qep-dlg-foot-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.qep-footer-btn {
-  display:       inline-flex;
-  align-items:   center;
-  padding:       8px 14px;
+.qep-ghost-btn {
+  padding:       7px 12px;
+  border:        1px solid #e2e8f0;
   border-radius: 6px;
-  border:        none;
+  background:    transparent;
   font-family:   inherit;
-  font-size:     13px;
+  font-size:     12px;
   font-weight:   600;
+  color:         #64748b;
   cursor:        pointer;
   white-space:   nowrap;
-  transition:    background 0.12s, color 0.12s, opacity 0.12s;
+  transition:    background .12s, color .12s, border-color .12s;
 }
 
-/* "Tout sélectionner" / "Effacer" — ghost style */
-.qep-select-all,
-.qep-clear-all {
-  background: #f1f5f9;
-  color:      #475569;
+.qep-ghost-btn:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
+
+.qep-dlg-confirm {
+  padding:       8px 16px;
+  border:        none;
+  border-radius: 6px;
+  background:    #4477aa;
+  color:         #fff;
+  font-family:   inherit;
+  font-size:     13px;
+  font-weight:   700;
+  cursor:        pointer;
+  white-space:   nowrap;
+  box-shadow:    0 2px 6px rgba(68,119,170,.30);
+  transition:    background .12s, opacity .12s, box-shadow .12s;
 }
 
-.qep-select-all:hover,
-.qep-clear-all:hover {
-  background: #e2e8f0;
-  color:      #1e293b;
-}
-
-/* "Annuler" */
-.qep-cancel-btn {
-  background: transparent;
-  color:      #64748b;
-  border:     1px solid #cbd5e1;
-}
-
-.qep-cancel-btn:hover {
-  background: #f8fafc;
-  color:      #1e293b;
-}
-
-/* "Imprimer (N)" — primary CTA */
-.qep-print-btn {
-  background: #4477aa;
-  color:      #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-}
-
-.qep-print-btn:hover:not(:disabled) {
-  background: #2d5f8a;
-}
-
-.qep-print-btn:disabled {
-  opacity: 0.45;
-  cursor:  not-allowed;
-}
+.qep-dlg-confirm:hover:not([disabled]) { background: #2d5f8a; box-shadow: 0 3px 8px rgba(68,119,170,.38); }
+.qep-dlg-confirm[disabled]             { background: #94a3b8; box-shadow: none; cursor: not-allowed; opacity: .7; }
 
 
 /* ─── Print media ────────────────────────────────────────────────────────────
-   Always hide the extension widget and the picker overlay during printing.
-   The JS also injects targeted rules at runtime.
+   Always hide the panel and modal during printing.
+   The JS also injects runtime rules via _triggerPrint().
    ────────────────────────────────────────────────────────────────────────── */
 
 @media print {
-  .qep-wrapper,
+  .qep-panel,
   .qep-overlay {
     display: none !important;
   }

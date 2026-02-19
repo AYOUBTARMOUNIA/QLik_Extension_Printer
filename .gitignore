@@ -1,8 +1,5 @@
-# Third-party libraries (downloaded by setup.sh — do not commit binaries)
-lib/
-
-# Generated icons (produced by generate-icons.js)
-icons/
+# Built distribution ZIP — generated locally, not committed
+*.zip
 
 # OS artefacts
 .DS_Store
@@ -17,7 +14,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Node (if anyone runs npm install locally in the future)
+# Node (not used, but guard against accidental installs)
 node_modules/
 package-lock.json
 yarn.lock

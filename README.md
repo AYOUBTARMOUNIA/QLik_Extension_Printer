@@ -1,166 +1,117 @@
-# PDF Export Pro
+# QLik Extension Printer
 
-A Manifest V3 Chrome extension that exports any webpage to a clean, well-formatted PDF with a single click.
+A **Qlik Sense visualization extension** that adds a configurable **Print / Export PDF** button to any sheet. One click opens the browser's native print dialog with a clean, sheet-only layout — ads, navigation bars, and Qlik toolbars are all hidden automatically.
 
-## Features
-
-| Feature | Detail |
-|---------|--------|
-| **One-click export** | Toolbar button → immediate PDF download |
-| **Smart content extraction** | Mozilla Readability removes ads, navbars, cookie banners, sidebars, and overlays |
-| **Clean layout** | Preserves text, images, tables, and code blocks; avoids mid-paragraph page breaks |
-| **Custom options** | Paper size (A4 / Letter), margins, font scale, image toggle, header/footer with URL & date |
-| **Selection mode** | Drag to select any region of the page for partial export |
+No server-side component, no dependencies to install.
 
 ---
 
-## Installation (development / unpacked)
+## Installation — QMC import
 
-### 1. Clone the repository
+1. **Download** or build the ZIP (see [Building the ZIP](#building-the-zip) below).
+2. Log in to **Qlik Management Console (QMC)** → **Extensions**.
+3. Click **Import** and select `QLik_Extension_Printer.zip`.
+4. The extension appears in the list as **QLik Extension Printer**.
+
+> The ZIP must contain `QLik_Extension_Printer.qext` at its root — that file is how QMC identifies it as a valid extension.
+
+### Building the ZIP
+
+From the repo root (Linux / macOS / Git Bash):
 
 ```bash
-git clone <repo-url>
 cd QLik_Extension_Printer
+zip -r ../QLik_Extension_Printer.zip \
+  QLik_Extension_Printer.qext \
+  QLik_Extension_Printer.js \
+  QLik_Extension_Printer.css \
+  README.md
 ```
 
-### 2. Download dependencies
+Or on Windows PowerShell:
 
-Run the setup script. It downloads the three required JS libraries and generates placeholder icons:
-
-```bash
-chmod +x setup.sh
-./setup.sh
+```powershell
+Compress-Archive -Path `
+  QLik_Extension_Printer.qext, `
+  QLik_Extension_Printer.js, `
+  QLik_Extension_Printer.css `
+  -DestinationPath ..\QLik_Extension_Printer.zip -Force
 ```
 
-> **Requires:** `node >= 14`, and `curl` or `wget`.
-
-The script downloads from jsDelivr CDN:
-
-| Library | Version | Purpose |
-|---------|---------|---------|
-| `@mozilla/readability` | 0.5.0 | Article extraction |
-| `html2canvas` | 1.4.1 | DOM → canvas rendering |
-| `jsPDF` | 2.5.1 | Canvas → PDF generation |
-
-### 3. Load the extension in Chrome
-
-1. Open `chrome://extensions`
-2. Enable **Developer mode** (toggle, top-right)
-3. Click **Load unpacked**
-4. Select the `QLik_Extension_Printer/` folder
-
-The extension icon appears in the toolbar. Pin it if needed via the puzzle-piece menu.
+> **Important:** zip the individual files, NOT the parent folder. QMC expects the `.qext` file to be at the root of the archive, not inside a subfolder.
 
 ---
 
-## Usage
+## Adding to a sheet
 
-### Full-page export
+1. Open a Qlik Sense app and enter **Edit** mode on a sheet.
+2. In the **Assets** panel → **Extensions**, find **QLik Extension Printer**.
+3. Drag it onto the sheet and resize as needed (a small 1×1 grid cell works).
+4. Click **Done editing**.
 
-1. Navigate to any webpage
-2. Click the **PDF Export Pro** toolbar icon
-3. (Optional) adjust options in the collapsible **Options** panel
-4. Click **Export to PDF** — the PDF downloads automatically
+---
 
-### Region export
+## Configuration options
 
-1. Click the toolbar icon
-2. Click **Select Region…**
-3. The page dims — drag to outline the area you want
-4. Release the mouse; the PDF of just that region downloads
-
-### Options
+All options are set in the **Properties panel** (right-hand panel in Edit mode).
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| Paper size | A4 | A4 (210×297 mm) or US Letter (216×279 mm) |
-| Margins | 10 mm | Page margins in mm (0–30) |
-| Font scale | 100% | Scale the base font size (60–160%) |
-| Include images | ✓ | Toggle image rendering |
-| URL & date header/footer | ✓ | Show URL in header, date + page number in footer |
-| Smart content extraction | ✓ | Use Mozilla Readability on article-like pages |
-
-Click **Save as defaults** to persist your preferred settings across sessions.
+| Button label | `Print / Export PDF` | Text shown on the button. Supports Qlik expressions. |
+| Show printer icon | On | Toggle the SVG printer icon beside the label. |
+| What to print | Entire sheet | **Entire sheet** hides Qlik chrome and prints all visible objects. **This object only** hides everything except the visualization containing this button. |
+| Page orientation | Landscape | Sent as a CSS `@page` hint to the browser. |
+| Colour mode | Full colour | **Grayscale** applies a CSS filter — useful for monochrome printers. |
+| Hide button when printing | Yes | Prevents the print button itself from appearing in the printed output. |
 
 ---
 
-## Architecture
+## How it works
+
+When the button is clicked the extension:
+
+1. Injects a temporary `<style>` tag with `@media print` rules that hide Qlik's header, toolbar, navigation, side panel, and any other chrome.
+2. Calls `window.print()` to open the system print dialog.
+3. Listens for the `afterprint` event (fires when the dialog is dismissed) and removes the injected style, restoring the page exactly as before.
+
+No data leaves the browser. The PDF is generated entirely by the browser's built-in print-to-PDF engine.
+
+---
+
+## File structure
 
 ```
 QLik_Extension_Printer/
-├── manifest.json         Manifest V3 config — permissions, content scripts, action
-├── background.js         Service worker: message relay + chrome.storage CRUD
-├── content.js            Page-context script: DOM cleaning, Readability, PDF pipeline
-├── popup.html            Extension popup markup
-├── popup.css             Popup styles (CSS custom properties, no framework)
-├── popup.js              Popup controller: reads storage, dispatches messages
-│
-├── lib/                  Third-party libraries (downloaded by setup.sh)
-│   ├── Readability.js    Mozilla Readability
-│   ├── html2canvas.min.js
-│   └── jspdf.umd.min.js
-│
-├── icons/                Extension icons (generated by generate-icons.js)
-│   ├── icon16.png
-│   ├── icon32.png
-│   ├── icon48.png
-│   └── icon128.png
-│
-├── generate-icons.js     Node script — creates PNG icons from built-in SVG template
-└── setup.sh              One-shot bootstrap: downloads libs + generates icons
+├── QLik_Extension_Printer.qext   ← QMC reads this to validate the extension
+├── QLik_Extension_Printer.js     ← AMD module (RequireJS), main logic
+├── QLik_Extension_Printer.css    ← Button styles + print media rules
+├── README.md
+└── CLAUDE.md
 ```
-
-### Message flow
-
-```
-popup.js
-  │  chrome.runtime.sendMessage({ target:'content', action:'EXPORT_PDF', options })
-  ▼
-background.js (service worker)
-  │  chrome.tabs.sendMessage(tabId, message)
-  ▼
-content.js (active tab)
-  │  buildReadableClone() / buildCleanedClone()
-  │  → html2canvas() → buildPDF() → jsPDF.save()
-  ▼
-Browser download
-```
-
-### Content cleaning strategy
-
-1. **Readability pass** (when enabled, on pages with > 200 words): Mozilla Readability extracts the article title, byline, and body; ignores everything else.
-2. **Heuristic pass** (always applied on the fallback / full-page clone): removes elements matching `JUNK_SELECTORS` (100+ patterns for ads, navbars, banners, modals, sidebars) and any element with `position:fixed` or `position:sticky`.
-
-### PDF generation
-
-- `html2canvas` renders the cleaned DOM node to a `<canvas>` at 2× scale for crisp output.
-- `buildPDF()` in `content.js` slices the canvas into page-height strips, encodes each as JPEG (quality 0.92), and assembles a multi-page `jsPDF` document.
-- Page dimensions respect the chosen paper size; header/footer bands are reserved before slicing.
 
 ---
 
-## Known limitations
+## Compatibility
 
-- **Cross-origin images** may be blocked by CORS. html2canvas will skip them unless the server sends `Access-Control-Allow-Origin: *`.
-- **Heavy JS-rendered pages** (SPAs) may need a moment to load before exporting. Wait until the page is fully rendered.
-- **Chrome internal pages** (`chrome://`, `chrome-extension://`) block content scripts entirely; export is unavailable there.
-- **lib/ files are loaded on every page** for simplicity (~600 kB combined). A future optimisation is lazy injection via `chrome.scripting.executeScript` only when the user triggers an export.
+| Platform | Supported |
+|----------|-----------|
+| Qlik Sense Enterprise (QSE) on Windows | Yes |
+| Qlik Sense Enterprise on Kubernetes | Yes |
+| Qlik Sense Desktop | Yes |
+| QlikView | No — different extension model |
+
+Tested on Chrome, Edge, and Firefox. Safari's print dialog has limited CSS `@page` support; orientation hints may be ignored.
 
 ---
 
-## Development
+## Troubleshooting
 
-No build step required. Edit files directly and reload the extension in `chrome://extensions` (click the refresh icon on the extension card).
-
-Useful commands:
-
-```bash
-# Regenerate icons only
-node generate-icons.js
-
-# Re-download a single lib (e.g. upgrade jsPDF)
-curl -fsSL https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js -o lib/jspdf.umd.min.js
-```
+| Problem | Fix |
+|---------|-----|
+| "The zip file did not contain any valid extension" | The archive is missing `QLik_Extension_Printer.qext` at the root, or the file contains invalid JSON. Re-zip the individual files, not the folder. |
+| Button doesn't appear in the Extensions panel | Reload QMC and re-import. Check the browser console for AMD load errors. |
+| Print output includes Qlik toolbars | Your QSE version uses different CSS class names. Inspect the element and add the selectors to the `hideSelectors` list in `QLik_Extension_Printer.js`. |
+| Grayscale mode not working | Some browsers ignore CSS filters in print. Use the printer driver's own grayscale setting instead. |
 
 ---
 

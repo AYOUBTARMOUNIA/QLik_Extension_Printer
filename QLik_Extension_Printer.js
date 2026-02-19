@@ -4,12 +4,15 @@
  * Qlik Sense Visualization Extension — Sheet / Object Printer
  *
  * Features:
- *   - Print the current sheet, a visible viewport area, or a single object.
+ *   - Print the current sheet, the visible viewport, or a single object.
  *   - "Select sheets" picker: choose one or several published sheets and print
  *     them sequentially (navigates to each, waits for render, then prints).
  *   - "Viewport" mode: prints exactly what is visible on screen (no scroll).
+ *   - Paper size: A4 / A3 / Letter / Legal.
+ *   - Print scale: 100 % / 90 % / 75 % / 50 %.
+ *   - Colour mode: full colour / grayscale.
  *
- * No server-side component required. Works in QSE and QAP.
+ * No server-side component required.  Works in QSE and QAP.
  * AMD module — loaded by Qlik's RequireJS runtime.
  */
 
@@ -26,6 +29,8 @@ define(['qlik', 'jquery'], function (qlik, $) {
       appearance: {
         uses: 'settings',
         items: {
+
+          // ── Label & icon ──────────────────────────────────────────────
 
           buttonLabel: {
             ref:          'props.buttonLabel',
@@ -46,6 +51,20 @@ define(['qlik', 'jquery'], function (qlik, $) {
               { value: false, label: 'Off' }
             ]
           },
+
+          showSheetSelector: {
+            ref:          'props.showSheetSelector',
+            label:        'Show "Select sheets" button',
+            type:         'boolean',
+            defaultValue: true,
+            component:    'switch',
+            options: [
+              { value: true,  label: 'Yes' },
+              { value: false, label: 'No'  }
+            ]
+          },
+
+          // ── What / how to print ───────────────────────────────────────
 
           printTarget: {
             ref:          'props.printTarget',
@@ -72,6 +91,36 @@ define(['qlik', 'jquery'], function (qlik, $) {
             ]
           },
 
+          // ── Output quality ────────────────────────────────────────────
+
+          paperSize: {
+            ref:          'props.paperSize',
+            label:        'Paper / output size',
+            type:         'string',
+            component:    'dropdown',
+            defaultValue: 'A4',
+            options: [
+              { value: 'A4',     label: 'A4  (210 × 297 mm)'   },
+              { value: 'A3',     label: 'A3  (297 × 420 mm)'   },
+              { value: 'Letter', label: 'Letter (8.5 × 11 in)' },
+              { value: 'Legal',  label: 'Legal  (8.5 × 14 in)' }
+            ]
+          },
+
+          printScale: {
+            ref:          'props.printScale',
+            label:        'Print scale',
+            type:         'string',
+            component:    'radiobuttons',
+            defaultValue: '100',
+            options: [
+              { value: '100', label: '100 %' },
+              { value: '90',  label: '90 %'  },
+              { value: '75',  label: '75 %'  },
+              { value: '50',  label: '50 %'  }
+            ]
+          },
+
           colorMode: {
             ref:          'props.colorMode',
             label:        'Colour mode',
@@ -87,18 +136,6 @@ define(['qlik', 'jquery'], function (qlik, $) {
           hideExtensionOnPrint: {
             ref:          'props.hideSelf',
             label:        'Hide this button when printing',
-            type:         'boolean',
-            defaultValue: true,
-            component:    'switch',
-            options: [
-              { value: true,  label: 'Yes' },
-              { value: false, label: 'No'  }
-            ]
-          },
-
-          showSheetSelector: {
-            ref:          'props.showSheetSelector',
-            label:        'Show "Select sheets" button',
             type:         'boolean',
             defaultValue: true,
             component:    'switch',
@@ -145,20 +182,22 @@ define(['qlik', 'jquery'], function (qlik, $) {
 
       var self         = this;
       var props        = layout.props || {};
-      var label        = props.buttonLabel        || 'Print / Export PDF';
-      var showIcon     = props.buttonIcon         !== false;
-      var target       = props.printTarget        || 'sheet';
-      var orientation  = props.orientation        || 'landscape';
-      var colorMode    = props.colorMode          || 'color';
-      var hideSelf     = props.hideSelf           !== false;
-      var showSelector = props.showSheetSelector  !== false;
+      var label        = props.buttonLabel       || 'Print / Export PDF';
+      var showIcon     = props.buttonIcon        !== false;
+      var target       = props.printTarget       || 'sheet';
+      var orientation  = props.orientation       || 'landscape';
+      var paperSize    = props.paperSize         || 'A4';
+      var printScale   = props.printScale        || '100';
+      var colorMode    = props.colorMode         || 'color';
+      var hideSelf     = props.hideSelf          !== false;
+      var showSelector = props.showSheetSelector !== false;
 
       // ── Icon SVGs ──────────────────────────────────────────────────────
 
       var printerIconHtml = showIcon
         ? '<svg class="qep-icon" viewBox="0 0 24 24" aria-hidden="true">' +
-            '<path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3z' +
-            'M16 19H8v-5h8v5zm1-11H7V4h10v4z"/>' +
+            '<path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6' +
+            'c0-1.66-1.34-3-3-3zM16 19H8v-5h8v5zm1-11H7V4h10v4z"/>' +
           '</svg>'
         : '';
 
@@ -192,17 +231,17 @@ define(['qlik', 'jquery'], function (qlik, $) {
       var printOpts = {
         target:      target,
         orientation: orientation,
+        paperSize:   paperSize,
+        printScale:  printScale,
         colorMode:   colorMode,
         hideSelf:    hideSelf,
         $container:  $element
       };
 
-      // Primary: print current view
       $element.find('.qep-btn-primary').on('click', function () {
         _triggerPrint(printOpts);
       });
 
-      // Secondary: open sheet picker
       if (showSelector) {
         $element.find('.qep-btn-secondary').on('click', function () {
           _openSheetPicker(qlik.currApp(self), printOpts);
@@ -219,29 +258,30 @@ define(['qlik', 'jquery'], function (qlik, $) {
 
   /**
    * Opens a modal listing all available sheets with checkboxes.
-   * User can select one or many sheets then trigger sequential printing.
    *
-   * @param {object} app       — Qlik app object from qlik.currApp()
-   * @param {object} printOpts — print options to pass to _triggerPrint()
+   * @param {object} app       — qlik.currApp(self)
+   * @param {object} printOpts — options forwarded to _triggerPrint()
    */
   function _openSheetPicker (app, printOpts) {
-    // Remove any previously open picker
     $('#qep-overlay').remove();
 
-    // Build skeleton with loading state
     var $overlay = $(
       '<div id="qep-overlay" class="qep-overlay" role="dialog" aria-modal="true"' +
           ' aria-labelledby="qep-modal-title">' +
         '<div class="qep-modal">' +
           '<div class="qep-modal-header">' +
             '<h3 class="qep-modal-title" id="qep-modal-title">' +
-              'Sélectionner les feuilles à imprimer' +
+              'S\u00e9lectionner les feuilles \u00e0 imprimer' +
             '</h3>' +
-            '<button class="qep-close-btn" type="button" aria-label="Fermer">\u2715</button>' +
+            '<button class="qep-close-btn" type="button" aria-label="Fermer">' +
+              '\u2715' +
+            '</button>' +
           '</div>' +
-          '<div class="qep-modal-body qep-loading">Chargement des feuilles\u2026</div>' +
+          '<div class="qep-modal-body qep-loading">' +
+            'Chargement des feuilles\u2026' +
+          '</div>' +
           '<div class="qep-modal-footer" style="display:none;">' +
-            '<button class="qep-footer-btn qep-select-all" type="button">Tout sélectionner</button>' +
+            '<button class="qep-footer-btn qep-select-all" type="button">Tout s\u00e9lectionner</button>' +
             '<button class="qep-footer-btn qep-clear-all"  type="button">Effacer</button>' +
             '<span class="qep-footer-spacer"></span>' +
             '<button class="qep-footer-btn qep-cancel-btn" type="button">Annuler</button>' +
@@ -255,7 +295,6 @@ define(['qlik', 'jquery'], function (qlik, $) {
 
     $('body').append($overlay);
 
-    // Close helpers
     function closePicker () { $overlay.remove(); }
 
     $overlay.on('click', function (e) {
@@ -263,27 +302,25 @@ define(['qlik', 'jquery'], function (qlik, $) {
     });
     $overlay.find('.qep-close-btn, .qep-cancel-btn').on('click', closePicker);
 
-    // Load sheets then render list
+    // Load sheets — uses 3-strategy fallback (see _loadSheets below)
     _loadSheets(app, function (err, sheets) {
-      if (err || !sheets.length) {
+      if (err || !sheets || !sheets.length) {
         $overlay.find('.qep-modal-body')
           .removeClass('qep-loading')
           .html(
             '<div class="qep-picker-error">' +
               (err
                 ? 'Impossible de charger la liste des feuilles.<br>' +
-                  'Seule la feuille courante sera imprimée.'
-                : 'Aucune feuille trouvée dans cette application.') +
+                  'V\u00e9rifiez vos droits sur l\u2019application.<br><br>' +
+                  '<small>' + _escapeHtml(String(err.message || err)) + '</small>'
+                : 'Aucune feuille trouv\u00e9e dans cette application.') +
             '</div>'
           );
         $overlay.find('.qep-modal-footer').show();
         $overlay.find('.qep-print-btn')
           .text('Imprimer la feuille courante')
           .prop('disabled', false)
-          .on('click', function () {
-            closePicker();
-            _triggerPrint(printOpts);
-          });
+          .on('click', function () { closePicker(); _triggerPrint(printOpts); });
         return;
       }
 
@@ -291,15 +328,11 @@ define(['qlik', 'jquery'], function (qlik, $) {
     });
   }
 
-  /**
-   * Populates the modal body with a checkbox list of sheets
-   * and wires the footer action buttons.
-   */
+  /** Populates the modal body and wires the footer buttons. */
   function _renderSheetList ($overlay, sheets, printOpts, closePicker) {
     var $body   = $overlay.find('.qep-modal-body').removeClass('qep-loading').empty();
     var $footer = $overlay.find('.qep-modal-footer').show();
 
-    // Build checkbox list
     var html = '<ul class="qep-sheet-list">';
     sheets.forEach(function (sheet, i) {
       html +=
@@ -314,12 +347,11 @@ define(['qlik', 'jquery'], function (qlik, $) {
     html += '</ul>';
     $body.html(html);
 
-    // Update the Print button label to reflect current selection count
     function updatePrintBtn () {
-      var count = $overlay.find('.qep-sheet-check:checked').length;
-      var $btn  = $footer.find('.qep-print-btn');
-      $btn.prop('disabled', count === 0);
-      $btn.text('Imprimer (' + count + ' feuille' + (count > 1 ? 's' : '') + ')');
+      var n    = $overlay.find('.qep-sheet-check:checked').length;
+      var $btn = $footer.find('.qep-print-btn');
+      $btn.prop('disabled', n === 0);
+      $btn.text('Imprimer (' + n + ' feuille' + (n > 1 ? 's' : '') + ')');
     }
 
     $body.on('change', '.qep-sheet-check', updatePrintBtn);
@@ -328,66 +360,118 @@ define(['qlik', 'jquery'], function (qlik, $) {
       $overlay.find('.qep-sheet-check').prop('checked', true);
       updatePrintBtn();
     });
-
     $footer.find('.qep-clear-all').on('click', function () {
       $overlay.find('.qep-sheet-check').prop('checked', false);
       updatePrintBtn();
     });
 
     $footer.find('.qep-print-btn').on('click', function () {
-      var selectedIds = [];
+      var ids = [];
       $overlay.find('.qep-sheet-check:checked').each(function () {
-        selectedIds.push($(this).val());
+        ids.push($(this).val());
       });
       closePicker();
-      _printSheetsSequentially(selectedIds, printOpts);
+      _printSheetsSequentially(ids, printOpts);
     });
 
     updatePrintBtn();
   }
 
 
-  // ─── Load sheet list via Qlik Capabilities API ───────────────────────────
+  // ─── Load sheet list — 3-strategy fallback ───────────────────────────────
 
   /**
-   * Fetches the list of sheets from the current Qlik app.
-   * Supports both promise-style (Qlik Sense ≥ 3.x) and callback-style APIs.
+   * Tries three approaches to fetch the sheet list, in order of reliability:
    *
-   * @param {object}   app       — qlik.currApp() result
-   * @param {Function} callback  — fn(err, sheets[]) where sheet = { id, title }
+   *  1. Enigma.js createSessionObject  (Qlik Sense ≥ 2.x, most robust)
+   *  2. app.getObjectList promise style (Capabilities API, modern Qlik)
+   *  3. app.getObjectList callback style (Capabilities API, older Qlik)
+   *
+   * @param {object}   app      — qlik.currApp(self)
+   * @param {Function} callback — fn(err, [{id, title}])
    */
   function _loadSheets (app, callback) {
+
+    // ── Strategy 1 : Enigma.js session object ──────────────────────────
+    var enigma = app.model &&
+      (app.model.enigmaModel || app.model.engine || app.model.engineApp);
+
+    if (enigma && typeof enigma.createSessionObject === 'function') {
+      enigma.createSessionObject({
+        qInfo: { qType: 'SheetList' },
+        qAppObjectListDef: {
+          qType: 'sheet',
+          qData: { title: '/qMetaDef/title' }
+        }
+      })
+      .then(function (sessionObj) { return sessionObj.getLayout(); })
+      .then(function (layout) {
+        var items = (layout.qAppObjectList && layout.qAppObjectList.qItems) || [];
+        var sheets = items.map(function (item) {
+          return {
+            id:    item.qInfo.qId,
+            title: (item.qData  && item.qData.title)  ||
+                   (item.qMeta  && item.qMeta.title)  ||
+                   'Sans titre'
+          };
+        });
+        callback(null, sheets);
+      })
+      .catch(function () { _loadSheetsFallback(app, callback); });
+      return;
+    }
+
+    _loadSheetsFallback(app, callback);
+  }
+
+  /**
+   * Fallback strategies 2 & 3 via the Capabilities API getObjectList.
+   */
+  function _loadSheetsFallback (app, callback) {
     try {
       var result = app.getObjectList('sheet');
 
       if (result && typeof result.then === 'function') {
-        // Promise-style (modern Qlik Sense)
-        result.then(function (model) {
-          var items = _safeGet(model, ['layout', 'qAppObjectList', 'qItems']) || [];
+        // ── Strategy 2 : promise style ──────────────────────────────────
+        result
+          .then(function (model) {
+            var items = _safeGet(model, ['layout', 'qAppObjectList', 'qItems']) || [];
+            callback(null, _mapSheets(items));
+          })
+          .catch(function (err) { callback(err, []); });
+
+      } else if (result) {
+        // ── Strategy 3 : model/observable — read layout directly ────────
+        // In some Qlik versions getObjectList() returns the model immediately.
+        var items = _safeGet(result, ['layout', 'qAppObjectList', 'qItems']);
+        if (items && items.length) {
           callback(null, _mapSheets(items));
-        }).catch(function (err) {
-          callback(err, []);
-        });
+        } else {
+          // Try passing a callback as second argument (very old API)
+          app.getObjectList('sheet', function (model) {
+            var it = _safeGet(model, ['layout', 'qAppObjectList', 'qItems']) || [];
+            callback(null, _mapSheets(it));
+          });
+        }
+
       } else {
-        // Callback-style fallback
-        app.getObjectList('sheet', function (model) {
-          var items = _safeGet(model, ['layout', 'qAppObjectList', 'qItems']) || [];
-          callback(null, _mapSheets(items));
-        });
+        callback(new Error('getObjectList returned nothing'), []);
       }
     } catch (err) {
       callback(err, []);
     }
   }
 
-  /** Maps raw Qlik sheet objects to { id, title } */
+  /** Maps raw Qlik items to {id, title} */
   function _mapSheets (items) {
     return items
       .filter(function (item) { return item && item.qInfo && item.qInfo.qId; })
       .map(function (item) {
         return {
           id:    item.qInfo.qId,
-          title: (item.qMeta && item.qMeta.title) || 'Sans titre'
+          title: (item.qMeta && item.qMeta.title) ||
+                 (item.qData && item.qData.title) ||
+                 'Sans titre'
         };
       });
   }
@@ -396,15 +480,14 @@ define(['qlik', 'jquery'], function (qlik, $) {
   // ─── Sequential multi-sheet printing ─────────────────────────────────────
 
   /**
-   * Navigates to each sheet in order, waits for Qlik to render it, prints,
-   * then moves to the next one.  Falls back to printing the current sheet
-   * if the array is empty or navigation is unavailable.
+   * Navigates to each sheet, waits 3 s for render, opens print dialog,
+   * then moves on after the dialog is dismissed.
    *
-   * @param {string[]} sheetIds  — ordered array of Qlik sheet IDs
-   * @param {object}   opts      — same options as _triggerPrint()
+   * @param {string[]} sheetIds
+   * @param {object}   opts
    */
   function _printSheetsSequentially (sheetIds, opts) {
-    if (!sheetIds || sheetIds.length === 0) {
+    if (!sheetIds || !sheetIds.length) {
       _triggerPrint(opts);
       return;
     }
@@ -417,23 +500,18 @@ define(['qlik', 'jquery'], function (qlik, $) {
 
       var sheetId = sheetIds[index++];
 
-      // Navigate to the chosen sheet
       if (nav && typeof nav.gotoSheet === 'function') {
         nav.gotoSheet(sheetId);
       }
 
-      // Allow Qlik ~3 s to finish rendering before opening the print dialog
       setTimeout(function () {
         var cleanup = function () {
           window.removeEventListener('afterprint', cleanup);
-          // Brief pause before navigating to the next sheet
-          if (index < sheetIds.length) {
-            setTimeout(printNext, 800);
-          }
+          if (index < sheetIds.length) { setTimeout(printNext, 800); }
         };
         window.addEventListener('afterprint', cleanup);
         _triggerPrint(opts);
-      }, 3000);
+      }, 3000); // wait for Qlik to finish rendering the sheet
     }
 
     printNext();
@@ -443,18 +521,14 @@ define(['qlik', 'jquery'], function (qlik, $) {
   // ─── Core print logic ─────────────────────────────────────────────────────
 
   /**
-   * Injects a temporary <style> tag with @media print rules that produce a
-   * clean output matching the chosen target, orientation, and colour mode.
-   * Cleans up automatically after the print dialog is dismissed.
-   *
-   * Supports three targets:
-   *   'sheet'    — full Qlik sheet, chrome hidden
-   *   'viewport' — exactly what is visible on screen (no scroll artifacts)
-   *   'object'   — only the Qlik grid cell containing this extension
+   * Injects a temporary <style> tag with @media print rules, opens the
+   * browser print dialog, then cleans up after dismissal.
    *
    * @param {object} opts
    * @param {string}  opts.target       'sheet' | 'viewport' | 'object'
    * @param {string}  opts.orientation  'landscape' | 'portrait'
+   * @param {string}  opts.paperSize    'A4' | 'A3' | 'Letter' | 'Legal'
+   * @param {string}  opts.printScale   '100' | '90' | '75' | '50'
    * @param {string}  opts.colorMode    'color' | 'grayscale'
    * @param {boolean} opts.hideSelf
    * @param {jQuery}  opts.$container
@@ -463,100 +537,99 @@ define(['qlik', 'jquery'], function (qlik, $) {
     var STYLE_ID = 'qep-print-style';
     $('#' + STYLE_ID).remove();
 
-    // Common chrome selectors to hide on every sheet / viewport print
     var chromeSelectors = [
-      '.qv-header',
-      '.qv-toolbar',
-      '.qv-footer',
-      '.qv-side-panel',
-      '.qs-toolbar',
-      '.qs-navigation',
-      '.navigation-bar',
-      'header',
-      'nav',
-      '#hub-header',
-      '#sn-ui-blockers',
+      '.qv-header', '.qv-toolbar', '.qv-footer', '.qv-side-panel',
+      '.qs-toolbar', '.qs-navigation', '.navigation-bar',
+      'header', 'nav', '#hub-header', '#sn-ui-blockers',
       '.sheet-interaction-overlay'
     ].join(',');
 
-    var grayscale = opts.colorMode === 'grayscale'
-      ? '* { -webkit-filter: grayscale(100%); filter: grayscale(100%); }'
+    // ── Scale rule ───────────────────────────────────────────────────────
+    var scale      = String(opts.printScale || '100').replace(/[^0-9]/g, '');
+    var scaleRule  = (scale && scale !== '100')
+      ? 'html { zoom: ' + scale + '% !important; }'
       : '';
 
+    // ── Colour rules ─────────────────────────────────────────────────────
+    // Force the browser to print background colours and images accurately.
+    var colorAccuracy =
+      '*, img, canvas, svg {' +
+        '-webkit-print-color-adjust: exact !important;' +
+        'print-color-adjust: exact !important;' +
+      '}';
+
+    var grayscaleRule = opts.colorMode === 'grayscale'
+      ? '* { -webkit-filter: grayscale(100%) !important;' +
+             'filter: grayscale(100%) !important; }'
+      : '';
+
+    // ── Self-hiding ──────────────────────────────────────────────────────
     var selfRule = opts.hideSelf
       ? '.qep-wrapper { display: none !important; }'
       : '';
 
+    // ── Target-specific rules ────────────────────────────────────────────
+    var paperSize  = opts.paperSize  || 'A4';
     var hideRule   = '';
     var targetRule = '';
     var pageMargin = '10mm';
 
     if (opts.target === 'viewport') {
-      // ── Viewport mode ───────────────────────────────────────────────────
-      // Reproduce exactly what is visible on screen: capture the current
-      // scrolled position and clip the output to window dimensions.
+      // Print exactly what is visible on screen
       var vw = window.innerWidth;
       var vh = window.innerHeight;
-
-      hideRule = chromeSelectors + ' { display: none !important; }';
+      hideRule   = chromeSelectors + ' { display: none !important; }';
       pageMargin = '0';
-
-      // Freeze the viewport: prevent the browser from reflowing / paginating
       targetRule = [
         'html, body {',
         '  width: '  + vw + 'px !important;',
         '  height: ' + vh + 'px !important;',
         '  overflow: hidden !important;',
         '}',
-        // The main Qlik sheet canvas containers — clip to the visible area
         '.qv-canvas, .qv-sheet-container, .qv-stage {',
         '  max-width:  ' + vw + 'px !important;',
         '  max-height: ' + vh + 'px !important;',
         '  overflow: hidden !important;',
         '}',
-        // Suppress scroll-bar space so content is not displaced
         '::-webkit-scrollbar { display: none !important; }'
       ].join('\n');
 
     } else if (opts.target === 'sheet') {
-      // ── Full-sheet mode ─────────────────────────────────────────────────
       hideRule = chromeSelectors + ' { display: none !important; }';
 
     } else {
-      // ── Single-object mode ──────────────────────────────────────────────
-      hideRule = 'body > * { display: none !important; }';
+      // object only
+      hideRule   = 'body > * { display: none !important; }';
       targetRule = '.qep-print-target { display: block !important; }';
     }
 
     var css = [
       '@media print {',
-      '  @page { size: A4 ' + opts.orientation + '; margin: ' + pageMargin + '; }',
-      hideRule  ? ('  ' + hideRule)  : '',
-      targetRule ? ('  ' + targetRule) : '',
-      grayscale,
-      selfRule,
+      '  @page { size: ' + paperSize + ' ' + opts.orientation + '; margin: ' + pageMargin + '; }',
+      hideRule    ? '  ' + hideRule    : '',
+      targetRule  ? '  ' + targetRule  : '',
+      scaleRule   ? '  ' + scaleRule   : '',
+      colorAccuracy ? '  ' + colorAccuracy : '',
+      grayscaleRule ? '  ' + grayscaleRule : '',
+      selfRule    ? '  ' + selfRule    : '',
       '  html, body { background: white !important; }',
       '  .qv-inner-object, .qv-viz { box-shadow: none !important; border: none !important; }',
+      '  img, canvas { image-rendering: high-quality !important; }',
       '}'
     ].filter(Boolean).join('\n');
 
     $('<style>', { id: STYLE_ID, type: 'text/css' }).text(css).appendTo('head');
 
-    // Mark the ancestor grid cell for object-only mode
     var $ancestor = null;
     if (opts.target === 'object') {
       $ancestor = opts.$container
         .closest('.qv-gridcell, .qv-object, .qs-object-container, [class*="gridcell"]');
-      if ($ancestor.length) {
-        $ancestor.addClass('qep-print-target');
-      }
+      if ($ancestor.length) { $ancestor.addClass('qep-print-target'); }
     }
 
     var cleanup = function () {
       $('#' + STYLE_ID).remove();
-      if ($ancestor && $ancestor.length) {
-        $ancestor.removeClass('qep-print-target');
-      }
+      if ($ancestor && $ancestor.length) { $ancestor.removeClass('qep-print-target'); }
       window.removeEventListener('afterprint', cleanup);
     };
 
@@ -575,10 +648,6 @@ define(['qlik', 'jquery'], function (qlik, $) {
       .replace(/"/g,  '&quot;');
   }
 
-  /**
-   * Safely traverses a nested object by an array of keys.
-   * Returns undefined (not an error) if any key is missing.
-   */
   function _safeGet (obj, keys) {
     return keys.reduce(function (o, k) {
       return o && typeof o === 'object' ? o[k] : undefined;

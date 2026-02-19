@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Export Pro</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="logo">
+      <img src="icons/icon32.png" alt="" width="20" height="20" />
+      <span>PDF Export Pro</span>
+    </div>
+  </header>
+
+  <!-- ── Main export button ──────────────────────────────────────── -->
+  <section class="export-section">
+    <button id="btn-export" class="btn btn-primary btn-large">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 16l-5-5 1.4-1.4L11 13.2V4h2v9.2l2.6-2.6L17 12l-5 4z"/>
+        <path d="M5 20h14v-2H5v2z"/>
+      </svg>
+      Export to PDF
+    </button>
+
+    <!-- Status / error message shown inline -->
+    <p id="status-msg" class="status-msg" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- ── Selection mode ──────────────────────────────────────────── -->
+  <section class="section">
+    <button id="btn-select" class="btn btn-secondary btn-block">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 5h2V3H3v2zm0 8h2v-2H3v2zm4 8h2v-2H7v2zm8 0h2v-2h-2v2zm4-8h2v-2h-2v2zM3 17h2v-2H3v2zM7 3v2h2V3H7zm8 0v2h2V3h-2zm-4 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 8c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+      Select Region…
+    </button>
+  </section>
+
+  <!-- ── Options panel (collapsible) ────────────────────────────── -->
+  <details class="options-panel" id="options-panel">
+    <summary class="options-toggle">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 17v2h6v-2H3zm0-7v2h10v-2H3zm10 14v-2h8v-2h-8v-2h-2v6h2zm-6-4v2H3v2h4v2h2v-6H7zm14-2v-2H13v2h8zm-4-4V6h-2v2H3v2h14V8h-2z"/>
+      </svg>
+      Options
+      <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 10l5 5 5-5z"/>
+      </svg>
+    </summary>
+
+    <div class="options-body">
+
+      <!-- Paper size -->
+      <div class="field">
+        <label for="sel-paper">Paper size</label>
+        <select id="sel-paper">
+          <option value="a4">A4  (210 × 297 mm)</option>
+          <option value="letter">Letter  (216 × 279 mm)</option>
+        </select>
+      </div>
+
+      <!-- Margins -->
+      <div class="field">
+        <label for="inp-margins">
+          Margins
+          <span class="field-hint" id="margins-hint">10 mm</span>
+        </label>
+        <input
+          type="range" id="inp-margins"
+          min="0" max="30" step="1" value="10"
+          aria-describedby="margins-hint"
+        />
+      </div>
+
+      <!-- Font size scale -->
+      <div class="field">
+        <label for="inp-fontsize">
+          Font scale
+          <span class="field-hint" id="fontsize-hint">100%</span>
+        </label>
+        <input
+          type="range" id="inp-fontsize"
+          min="60" max="160" step="5" value="100"
+          aria-describedby="fontsize-hint"
+        />
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <label for="chk-images">Include images</label>
+        <input type="checkbox" id="chk-images" checked role="switch" />
+      </div>
+
+      <div class="toggle-row">
+        <label for="chk-headerfooter">URL &amp; date header/footer</label>
+        <input type="checkbox" id="chk-headerfooter" checked role="switch" />
+      </div>
+
+      <div class="toggle-row">
+        <label for="chk-readability">Smart content extraction</label>
+        <input type="checkbox" id="chk-readability" checked role="switch" />
+      </div>
+
+      <!-- Save defaults -->
+      <button id="btn-save-defaults" class="btn btn-ghost btn-block mt-8">
+        Save as defaults
+      </button>
+
+    </div><!-- /.options-body -->
+  </details>
+
+  <script src="popup.js"></script>
+</body>
+</html>

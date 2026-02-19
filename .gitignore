@@ -1,0 +1,23 @@
+# Third-party libraries (downloaded by setup.sh — do not commit binaries)
+lib/
+
+# Generated icons (produced by generate-icons.js)
+icons/
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Node (if anyone runs npm install locally in the future)
+node_modules/
+package-lock.json
+yarn.lock
